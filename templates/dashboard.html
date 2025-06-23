@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+    <h2>Welcome {{ user['username'] }} ({{ user['role'] }})</h2>
+
+    {% if user['role'] == 'admin' %}
+        <a href="/add_course">Add New Course</a><br><br>
+
+        <h3>Registered Students:</h3>
+        <ul>
+            {% for student in students %}
+                <li>{{ student['username'] }}</li>
+            {% endfor %}
+        </ul>
+
+        <h3>Course Enrollments:</h3>
+        <table border="1" cellpadding="5">
+            <tr>
+                <th>Student Name</th>
+                <th>Enrolled Course</th>
+                <th>Action</th>
+            </tr>
+            {% for enroll in enrollments %}
+            <tr>
+                <td>{{ enroll['username'] }}</td>
+                <td>{{ enroll['course_name'] }}</td>
+                <td>
+                    <a href="/remove_enrollment/{{ enroll['user_id'] }}/{{ enroll['course_id'] }}">Remove</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <h3>Available Courses:</h3>
+        <ul>
+            {% for course in courses %}
+                <li>
+                    {{ course['course_name'] }} - {{ course['description'] }}
+                    <a href="/enroll/{{ course['id'] }}">Enroll</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <br><a href="/logout">Logout</a>
+</body>
+</html>
