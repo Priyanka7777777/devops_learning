@@ -1,50 +1,65 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-    <h2>Welcome {{ user['username'] }} ({{ user['role'] }})</h2>
+<body class="container mt-4">
+
+    <h2>Welcome, {{ user['username'] }} ({{ user['role'] }})</h2>
 
     {% if user['role'] == 'admin' %}
-        <a href="/add_course">Add New Course</a><br><br>
+        <a class="btn btn-primary mb-3" href="/add_course">Add New Course</a>
 
         <h3>Registered Students:</h3>
-        <ul>
+        <ul class="list-group mb-4">
             {% for student in students %}
-                <li>{{ student['username'] }}</li>
+                <li class="list-group-item">{{ student['username'] }}</li>
             {% endfor %}
         </ul>
 
         <h3>Course Enrollments:</h3>
-        <table border="1" cellpadding="5">
-            <tr>
-                <th>Student Name</th>
-                <th>Enrolled Course</th>
-                <th>Action</th>
-            </tr>
-            {% for enroll in enrollments %}
-            <tr>
-                <td>{{ enroll['username'] }}</td>
-                <td>{{ enroll['course_name'] }}</td>
-                <td>
-                    <a href="/remove_enrollment/{{ enroll['user_id'] }}/{{ enroll['course_id'] }}">Remove</a>
-                </td>
-            </tr>
-            {% endfor %}
+        <table class="table table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>Student Name</th>
+                    <th>Enrolled Course</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for enroll in enrollments %}
+                <tr>
+                    <td>{{ enroll['username'] }}</td>
+                    <td>{{ enroll['course_name'] }}</td>
+                    <td>
+                        <a href="/remove_enrollment/{{ enroll['user_id'] }}/{{ enroll['course_id'] }}" 
+                           class="btn btn-danger btn-sm"
+                           onclick="return confirm('Are you sure you want to remove this enrollment?');">
+                           Remove
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
         </table>
+
     {% else %}
         <h3>Available Courses:</h3>
-        <ul>
+        <ul class="list-group">
             {% for course in courses %}
-                <li>
-                    {{ course['course_name'] }} - {{ course['description'] }}
-                    <a href="/enroll/{{ course['id'] }}">Enroll</a>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>
+                        {{ course['course_name'] }} - {{ course['description'] }}
+                    </span>
+                    <a class="btn btn-success btn-sm" href="/enroll/{{ course['id'] }}">Enroll</a>
                 </li>
             {% endfor %}
         </ul>
     {% endif %}
 
-    <br><a href="/logout">Logout</a>
+    <a class="btn btn-secondary mt-4" href="/logout">Logout</a>
+
 </body>
 </html>
