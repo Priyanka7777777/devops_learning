@@ -1,6 +1,5 @@
 import pytest
 import os
-import sqlite3
 from student_app import app, init_db
 
 TEST_DB = 'test_database.db'
@@ -8,20 +7,20 @@ TEST_DB = 'test_database.db'
 @pytest.fixture
 def client():
     app.config['TESTING'] = True
-    app.config['DATABASE'] = TEST_DB  # Set this before calling init_db
+    app.config['DATABASE'] = TEST_DB
 
-    # Remove test DB if it exists
+    # Remove test DB if it exists before test
     if os.path.exists(TEST_DB):
         os.remove(TEST_DB)
 
-    # Correctly initialize the test database
-    init_db(TEST_DB)
+    # Initialize the test database using current app config
+    init_db()
 
-    # Return a test client
+    # Create test client
     with app.test_client() as client:
         yield client
 
-    # Cleanup test DB after test run
+    # Cleanup test DB after test
     if os.path.exists(TEST_DB):
         os.remove(TEST_DB)
 

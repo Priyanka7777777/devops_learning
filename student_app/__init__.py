@@ -8,7 +8,7 @@ env_file = os.getenv('ENV_FILE', '.env')
 load_dotenv(dotenv_path=env_file)
 
 # Create Flask app
-app = Flask(__name__, template_folder='templates')  # Ensure templates path
+app = Flask(__name__, template_folder='templates')
 env = os.getenv('FLASK_ENV', 'development')
 
 # Load configuration
@@ -23,7 +23,6 @@ else:
     app.config.from_object(config.Config)
 
 app.secret_key = app.config['SECRET_KEY']
-DATABASE = app.config['DATABASE']
 
 def init_db(database_path=None):
     db_path = database_path or app.config['DATABASE']
@@ -51,17 +50,9 @@ def init_db(database_path=None):
     conn.commit()
     conn.close()
 
-
-
 def get_db_connection():
-    db_path = app.config.get('DATABASE', 'database.db')
+    db_path = app.config['DATABASE']
     conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-# Get DB connection
-def get_db_connection():
-    conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -151,5 +142,7 @@ def signup():
     return render_template('signup.html')
 
 if __name__ == '__main__':
-    init_db()
+    # Only initialize if DB does not exist
+    if not os.path.exists(app.config['DATABASE']):
+        init_db()
     app.run()
