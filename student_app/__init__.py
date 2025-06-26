@@ -158,23 +158,21 @@ def logout():
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
+    msg = ''
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        msg = ''
         try:
             with get_db_connection() as conn:
                 conn.execute('INSERT INTO users (username, password, role) VALUES (?, ?, ?)',
                              (username, password, 'user'))
                 conn.commit()
-                msg = 'User created successfully. Please login.'
+                msg = 'User created successfully'
         except sqlite3.IntegrityError:
             msg = 'Username already exists!'
         except sqlite3.Error as e:
             msg = f'Database error: {e}'
-        return render_template('signup.html', message=msg)
-    return render_template('signup.html')
-
+    return render_template('signup.html', message=msg)
 
 # Run app
 if __name__ == '__main__':
