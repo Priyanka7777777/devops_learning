@@ -26,26 +26,32 @@ DATABASE = app.config['DATABASE']
 
 def init_db(database_path=None):
     db_path = database_path or app.config['DATABASE']
-    if not os.path.exists(db_path):
-        conn = sqlite3.connect(db_path)
-        c = conn.cursor()
-        c.execute('''CREATE TABLE users (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        username TEXT UNIQUE NOT NULL,
-                        password TEXT NOT NULL,
-                        role TEXT NOT NULL)''')
-        c.execute('''CREATE TABLE courses (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        course_name TEXT NOT NULL,
-                        description TEXT)''')
-        c.execute('''CREATE TABLE enrollments (
-                        user_id INTEGER,
-                        course_id INTEGER,
-                        PRIMARY KEY (user_id, course_id),
-                        FOREIGN KEY(user_id) REFERENCES users(id),
-                        FOREIGN KEY(course_id) REFERENCES courses(id))''')
-        conn.commit()
-        conn.close()
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+
+    # Create users table
+    c.execute('''CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT UNIQUE NOT NULL,
+                    password TEXT NOT NULL,
+                    role TEXT NOT NULL)''')
+
+    # Create courses table
+    c.execute('''CREATE TABLE IF NOT EXISTS courses (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    course_name TEXT NOT NULL,
+                    description TEXT)''')
+
+    # Create enrollments table
+    c.execute('''CREATE TABLE IF NOT EXISTS enrollments (
+                    user_id INTEGER,
+                    course_id INTEGER,
+                    PRIMARY KEY (user_id, course_id),
+                    FOREIGN KEY(user_id) REFERENCES users(id),
+                    FOREIGN KEY(course_id) REFERENCES courses(id))''')
+
+    conn.commit()
+    conn.close()
 
 
 # Get DB connection
