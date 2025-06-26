@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head><title>Signup</title></head>
+<body>
+<h2>User Signup</h2>
+
+<!-- ✅ Display signup message -->
+{% if message %}
+  <p style="color: green;">{{ message }}</p>
+{% endif %}
+
+<form method="POST">
+    <label>Username:</label><br>
+    <input type="text" name="username"><br><br>
+    <label>Password:</label><br>
+    <input type="password" name="password"><br><br>
+    <button type="submit">Signup</button>
+</form>
+</body>
+</html>
