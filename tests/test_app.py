@@ -29,9 +29,14 @@ def table_exists(conn, table_name):
     cursor = conn.cursor()
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
     return cursor.fetchone() is not None
-
-# ✅ Check DB tables
 def test_db_initialization():
+    # Ensure test DB is created fresh
+    if os.path.exists(TEST_DB):
+        os.remove(TEST_DB)
+
+    # ✅ Initialize the database before checking
+    init_db(TEST_DB)
+
     conn = sqlite3.connect(TEST_DB)
     try:
         assert table_exists(conn, 'users'), "'users' table missing"
@@ -39,6 +44,7 @@ def test_db_initialization():
         assert table_exists(conn, 'enrollments'), "'enrollments' table missing"
     finally:
         conn.close()
+
 
 # ✅ Signup + login
 def test_user_signup_and_login(client):
