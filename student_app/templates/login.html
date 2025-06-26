@@ -1,15 +1,51 @@
 <!DOCTYPE html>
 <html>
-<head><title>Login</title></head>
+<head>
+    <title>Login</title>
+    <style>
+        .error {
+            border: 2px solid red;
+        }
+    </style>
+</head>
 <body>
-<h2>Login</h2>
-<form method="POST">
-    Username: <input type="text" name="username"><br><br>
-    Password: <input type="password" name="password"><br><br>
-    <button type="submit">Login</button>
+    <h2>Login</h2>
+    <form method="POST" onsubmit="return validateForm();">
+        Username: <input type="text" id="username" name="username"><br><br>
+        Password: <input type="password" id="password" name="password"><br><br>
+        <button type="submit">Login</button>
+    </form>
 
-<a href="/signup">New user? Signup here</a>
+    <br>
+    <a href="/signup">New user? Signup here</a>
 
+    <script>
+        function validateForm() {
+            const username = document.getElementById("username");
+            const password = document.getElementById("password");
+
+            let valid = true;
+
+            if (!username.value.trim()) {
+                username.classList.add("error");
+                valid = false;
+            } else {
+                username.classList.remove("error");
+            }
+
+            if (!password.value.trim()) {
+                password.classList.add("error");
+                valid = false;
+            } else {
+                password.classList.remove("error");
+            }
+
+            if (!valid) {
+                alert("Please fill in both username and password.");
+            }
+
+            return valid;
+        }
+    </script>
 </body>
 </html>
-
