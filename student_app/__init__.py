@@ -1,6 +1,7 @@
-from flask import Flask
+from flask import Flask, render_template, request, redirect, session, url_for
 import os
 from dotenv import load_dotenv
+import sqlite3
 
 # Load environment from .env file
 env_file = os.getenv('ENV_FILE', '.env')
@@ -23,10 +24,10 @@ app.secret_key = app.config['SECRET_KEY']
 DATABASE = app.config['DATABASE']
 
 
-# Data Layer: Initialize DB if not exists
-def init_db():
-    if not os.path.exists(DATABASE):
-        conn = sqlite3.connect(DATABASE)
+def init_db(database_path=None):
+    db_path = database_path or app.config['DATABASE']
+    if not os.path.exists(db_path):
+        conn = sqlite3.connect(db_path)
         c = conn.cursor()
         c.execute('''CREATE TABLE users (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,6 +46,7 @@ def init_db():
                         FOREIGN KEY(course_id) REFERENCES courses(id))''')
         conn.commit()
         conn.close()
+
 
 # Get DB connection
 def get_db_connection():
