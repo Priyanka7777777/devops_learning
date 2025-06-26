@@ -3,11 +3,32 @@
 from flask import Flask, render_template, request, redirect, session, url_for
 import sqlite3
 import os
+from dotenv import load_dotenv
+import config
+
+# Load main .env file
+load_dotenv()
+
+# Load environment-specific .env file
+env_file = os.getenv('ENV_FILE', '.env.development')
+load_dotenv(dotenv_path=env_file)
 
 app = Flask(__name__)
-app.secret_key = 'secret123'
 
-DATABASE = 'database.db'
+# Select environment
+env = os.getenv('FLASK_ENV', 'development')
+
+if env == 'development':
+    app.config.from_object(config.DevelopmentConfig)
+elif env == 'production':
+    app.config.from_object(config.ProductionConfig)
+elif env == 'testing':
+    app.config.from_object(config.TestingConfig)
+else:
+    app.config.from_object(config.Config)
+
+DATABASE = os.getenv('DATABASE')
+app.secret_key = os.getenv('SECRET_KEY')
 
 # Data Layer: Initialize DB if not exists
 def init_db():
@@ -29,9 +50,6 @@ def init_db():
                         PRIMARY KEY (user_id, course_id),
                         FOREIGN KEY(user_id) REFERENCES users(id),
                         FOREIGN KEY(course_id) REFERENCES courses(id))''')
-        # Insert admin user
-        c.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
-                  ('admin', 'admin', 'admin'))
         conn.commit()
         conn.close()
 
@@ -137,4 +155,4 @@ def signup():
 
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True)
+    app.run()
