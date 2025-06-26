@@ -26,30 +26,31 @@ app.secret_key = app.config['SECRET_KEY']
 DATABASE = app.config['DATABASE']
 
 def init_db(database_path=None):
-    db_path = database_path or app.config.get('DATABASE', 'database.db')
+    db_path = database_path or app.config['DATABASE']
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
 
     c.execute('''CREATE TABLE IF NOT EXISTS users (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    username TEXT UNIQUE NOT NULL,
-                    password TEXT NOT NULL,
-                    role TEXT NOT NULL)''')
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        role TEXT NOT NULL)''')
 
     c.execute('''CREATE TABLE IF NOT EXISTS courses (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    course_name TEXT NOT NULL,
-                    description TEXT)''')
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        course_name TEXT NOT NULL,
+        description TEXT)''')
 
     c.execute('''CREATE TABLE IF NOT EXISTS enrollments (
-                    user_id INTEGER,
-                    course_id INTEGER,
-                    PRIMARY KEY (user_id, course_id),
-                    FOREIGN KEY(user_id) REFERENCES users(id),
-                    FOREIGN KEY(course_id) REFERENCES courses(id))''')
+        user_id INTEGER,
+        course_id INTEGER,
+        PRIMARY KEY (user_id, course_id),
+        FOREIGN KEY(user_id) REFERENCES users(id),
+        FOREIGN KEY(course_id) REFERENCES courses(id))''')
 
     conn.commit()
     conn.close()
+
 
 
 def get_db_connection():
