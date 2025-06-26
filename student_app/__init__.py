@@ -25,27 +25,36 @@ else:
 app.secret_key = app.config['SECRET_KEY']
 DATABASE = app.config['DATABASE']
 
-# Initialize database
 def init_db(database_path=None):
-    db_path = database_path or DATABASE
-    with sqlite3.connect(db_path) as conn:
-        c = conn.cursor()
-        c.execute('''CREATE TABLE IF NOT EXISTS users (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        username TEXT UNIQUE NOT NULL,
-                        password TEXT NOT NULL,
-                        role TEXT NOT NULL)''')
-        c.execute('''CREATE TABLE IF NOT EXISTS courses (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        course_name TEXT NOT NULL,
-                        description TEXT)''')
-        c.execute('''CREATE TABLE IF NOT EXISTS enrollments (
-                        user_id INTEGER,
-                        course_id INTEGER,
-                        PRIMARY KEY (user_id, course_id),
-                        FOREIGN KEY(user_id) REFERENCES users(id),
-                        FOREIGN KEY(course_id) REFERENCES courses(id))''')
-        conn.commit()
+    db_path = database_path or app.config.get('DATABASE', 'database.db')
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+
+    # Create tables if they don't exist
+    c.execute('''CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT UNIQUE NOT NULL,
+                    password TEXT NOT NULL,
+                    role TEXT NOT NULL)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS courses (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    course_name TEXT NOT NULL,
+                    description TEXT)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS enrollments (
+                    user_id INTEGER,
+                    course_id INTEGER,
+                    PRIMARY KEY (user_id, course_id),
+                    FOREIGN KEY(user_id) REFERENCES users(id),
+                    FOREIGN KEY(course_id) REFERENCES courses(id))''')
+
+    conn.commit()
+    conn.close()
+
+def get_db_connection():
+    db_path = app.config.get('DATABASE', 'database.db')
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 # Get DB connection
 def get_db_connection():
