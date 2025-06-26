@@ -1,5 +1,6 @@
 import pytest
-from app import app, init_db, get_db_connection
+from student_app import app, init_db, get_db_connection
+
 
 @pytest.fixture
 def client():
