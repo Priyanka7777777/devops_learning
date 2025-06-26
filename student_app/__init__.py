@@ -1,23 +1,15 @@
-# Simple 3-Tier Student Course Management System (Flask + SQLite)
-
-from flask import Flask, render_template, request, redirect, session, url_for
-import sqlite3
+from flask import Flask
 import os
 from dotenv import load_dotenv
-import config
 
-# Load main .env file
-load_dotenv()
-
-# Load environment-specific .env file
-env_file = os.getenv('ENV_FILE', '.env.development')
+# Load environment from .env file
+env_file = os.getenv('ENV_FILE', '.env')
 load_dotenv(dotenv_path=env_file)
 
 app = Flask(__name__)
-
-# Select environment
 env = os.getenv('FLASK_ENV', 'development')
 
+import config
 if env == 'development':
     app.config.from_object(config.DevelopmentConfig)
 elif env == 'production':
@@ -27,8 +19,9 @@ elif env == 'testing':
 else:
     app.config.from_object(config.Config)
 
-DATABASE = os.getenv('DATABASE')
-app.secret_key = os.getenv('SECRET_KEY')
+app.secret_key = app.config['SECRET_KEY']
+DATABASE = app.config['DATABASE']
+
 
 # Data Layer: Initialize DB if not exists
 def init_db():
