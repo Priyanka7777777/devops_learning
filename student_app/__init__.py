@@ -30,16 +30,17 @@ def init_db(database_path=None):
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
 
-    # Create tables if they don't exist
     c.execute('''CREATE TABLE IF NOT EXISTS users (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     username TEXT UNIQUE NOT NULL,
                     password TEXT NOT NULL,
                     role TEXT NOT NULL)''')
+
     c.execute('''CREATE TABLE IF NOT EXISTS courses (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     course_name TEXT NOT NULL,
                     description TEXT)''')
+
     c.execute('''CREATE TABLE IF NOT EXISTS enrollments (
                     user_id INTEGER,
                     course_id INTEGER,
@@ -49,6 +50,7 @@ def init_db(database_path=None):
 
     conn.commit()
     conn.close()
+
 
 def get_db_connection():
     db_path = app.config.get('DATABASE', 'database.db')
