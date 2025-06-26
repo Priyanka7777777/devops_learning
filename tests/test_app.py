@@ -1,37 +1,40 @@
 import pytest
-import tempfile
 import os
+import sqlite3
 
-from student_app import app, init_db, get_db_connection
+from student_app import app, init_db
+
+TEST_DB = 'test_database.db'
 
 @pytest.fixture
 def client():
-    # Create a temporary database file
-    db_fd, db_path = tempfile.mkstemp()
+    # Set the testing configuration
     app.config['TESTING'] = True
-    app.config['DATABASE'] = db_path
+    app.config['DATABASE'] = TEST_DB
 
-    # Initialize the temporary DB
-    init_db(db_path)
+    # Delete test db if it exists to start fresh
+    if os.path.exists(TEST_DB):
+        os.remove(TEST_DB)
 
-    # Create test client
+    # Initialize the test database
+    init_db(TEST_DB)
+
+    # Provide a test client
     with app.test_client() as client:
         yield client
 
-    # Clean up after test
-    os.close(db_fd)
-    os.unlink(db_path)
+    # Clean up after tests
+    if os.path.exists(TEST_DB):
+        os.remove(TEST_DB)
 
 def test_home_page_loads(client):
     rv = client.get('/')
     assert b'Login' in rv.data
 
 def test_user_signup_and_login(client):
-    # Signup
     rv = client.post('/signup', data={'username': 'testuser', 'password': 'testpass'})
     assert b'User created successfully' in rv.data
 
-    # Login
     rv = client.post('/', data={'username': 'testuser', 'password': 'testpass'}, follow_redirects=True)
     assert b'Dashboard' in rv.data
 
@@ -40,10 +43,9 @@ def test_admin_dashboard_requires_login(client):
     assert b'Login' in rv.data
 
 def test_user_cannot_access_add_course(client):
-    # Signup + login
     client.post('/signup', data={'username': 'user1', 'password': 'pass'})
-    client.post('/', data={'username': 'user1', 'password': 'pass'})
+    client.post('/', data={'username': 'user1', 'password': 'pass'}, follow_redirects=True)
 
-    # Try accessing add_course
     rv = client.get('/add_course', follow_redirects=True)
-    assert b'Add Course' not in rv.data
+    assert b'Login' not in rv.data  # Still logged in, but not allowed as user
+    assert b'Add Course' not in rv.data  # User shouldn't see Add Course form
