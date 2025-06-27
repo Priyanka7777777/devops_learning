@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, url_for
+from flask import Flask, render_template, request, redirect, session, flash, url_for
 import os
 import sqlite3
 from dotenv import load_dotenv
@@ -7,11 +7,9 @@ from dotenv import load_dotenv
 env_file = os.getenv('ENV_FILE', '.env')
 load_dotenv(dotenv_path=env_file)
 
-# Create Flask app
 app = Flask(__name__, template_folder='templates')
 env = os.getenv('FLASK_ENV', 'development')
 
-# Load appropriate config
 import config
 if env == 'development':
     app.config.from_object(config.DevelopmentConfig)
@@ -24,9 +22,7 @@ else:
 
 app.secret_key = app.config['SECRET_KEY']
 
-
 def init_db(database_path=None):
-    """Initialize DB schema"""
     db_path = database_path or app.config['DATABASE']
     try:
         conn = sqlite3.connect(db_path)
@@ -56,9 +52,7 @@ def init_db(database_path=None):
         print(f"[ERROR] Failed to initialize DB: {e}")
         raise
 
-
 def get_db_connection():
-    """Return DB connection"""
     try:
         db_path = app.config['DATABASE']
         conn = sqlite3.connect(db_path)
@@ -67,7 +61,6 @@ def get_db_connection():
     except sqlite3.Error as e:
         print(f"[ERROR] Could not connect to DB: {e}")
         raise
-
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -88,27 +81,31 @@ def login():
         return render_template('login.html', message='Invalid Credentials')
     return render_template('login.html')
 
-
 @app.route('/dashboard')
 def dashboard():
     if 'user' not in session:
         return redirect('/')
-    
+
     user = session['user']
     with get_db_connection() as conn:
         courses = conn.execute('SELECT * FROM courses').fetchall()
+        enrollments = conn.execute(
+            'SELECT course_id FROM enrollments WHERE user_id = ?',
+            (user['id'],)).fetchall()
+        enrolled_course_ids = {row['course_id'] for row in enrollments}
+
         if user['role'] == 'admin':
             students = conn.execute("SELECT * FROM users WHERE role='user'").fetchall()
-            enrollments = conn.execute('''
+            all_enrollments = conn.execute('''
                 SELECT e.user_id, e.course_id, u.username, c.course_name 
                 FROM enrollments e
                 JOIN users u ON e.user_id = u.id
                 JOIN courses c ON e.course_id = c.id
             ''').fetchall()
             return render_template('dashboard.html', user=user, courses=courses,
-                                   students=students, enrollments=enrollments)
-    return render_template('dashboard.html', user=user, courses=courses)
+                                   students=students, enrollments=all_enrollments)
 
+    return render_template('dashboard.html', user=user, courses=courses, enrolled_ids=enrolled_course_ids)
 
 @app.route('/remove_enrollment/<int:user_id>/<int:course_id>')
 def remove_enrollment(user_id, course_id):
@@ -118,7 +115,6 @@ def remove_enrollment(user_id, course_id):
                          (user_id, course_id))
             conn.commit()
     return redirect('/dashboard')
-
 
 @app.route('/add_course', methods=['GET', 'POST'])
 def add_course():
@@ -136,17 +132,48 @@ def add_course():
 
     return render_template('add_course.html')
 
-
-@app.route('/enroll/<int:course_id>')
+@app.route('/enroll/<int:course_id>', methods=['GET'])
 def enroll(course_id):
     if 'user' not in session or session['user']['role'] != 'user':
         return redirect('/')
 
     user_id = session['user']['id']
     with get_db_connection() as conn:
-        conn.execute('INSERT OR IGNORE INTO enrollments (user_id, course_id) VALUES (?, ?)',
-                     (user_id, course_id))
+        existing = conn.execute(
+            'SELECT * FROM enrollments WHERE user_id = ? AND course_id = ?',
+            (user_id, course_id)).fetchone()
+
+        if not existing:
+            conn.execute(
+                'INSERT INTO enrollments (user_id, course_id) VALUES (?, ?)',
+                (user_id, course_id))
+            conn.commit()
+            flash('Successfully enrolled in the course.')
+
+    return redirect('/dashboard')
+
+@app.route('/unenroll/<int:course_id>', methods=['GET'])
+def unenroll(course_id):
+    if 'user' not in session or session['user']['role'] != 'user':
+        return redirect('/')
+
+    user_id = session['user']['id']
+    with get_db_connection() as conn:
+        conn.execute(
+            'DELETE FROM enrollments WHERE user_id = ? AND course_id = ?',
+            (user_id, course_id))
         conn.commit()
+        flash('You have been unenrolled from the course.')
+
+    return redirect('/dashboard')
+@app.route('/remove_course/<int:course_id>', methods=['GET'])
+def remove_course(course_id):
+    if 'user' in session and session['user']['role'] == 'admin':
+        with get_db_connection() as conn:
+            conn.execute('DELETE FROM courses WHERE id = ?', (course_id,))
+            conn.execute('DELETE FROM enrollments WHERE course_id = ?', (course_id,))
+            conn.commit()
+            flash('Course removed successfully.')
     return redirect('/dashboard')
 
 
@@ -154,7 +181,6 @@ def enroll(course_id):
 def logout():
     session.pop('user', None)
     return redirect('/')
-
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -174,7 +200,6 @@ def signup():
             msg = f'Database error: {e}'
     return render_template('signup.html', message=msg)
 
-# Run app
 if __name__ == '__main__':
     db_path = app.config.get('DATABASE')
     if not db_path:
@@ -182,4 +207,4 @@ if __name__ == '__main__':
     if not os.path.exists(db_path):
         print(f"[INFO] Initializing DB at: {db_path}")
         init_db(db_path)
-    app.run()
+    app.run(debug=True)
